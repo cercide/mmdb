@@ -1,0 +1,3 @@
+network,admin,description
+10.10.1.0/24,Bob,Guest Wifi
+10.10.2.0/24,Alice,Smart DMZ
