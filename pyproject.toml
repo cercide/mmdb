@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "mmdb"
+version = "0.1.0"
+description = ""
+authors = ["Leon Rendel <108236246+cercide@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "mmdb"}]
+
+[tool.poetry.dependencies]
+python = ">=3.7,<4.0.0"
+pydantic = ">=1.10.0,<2.0"
+netaddr = ">=0.7.0,<1.0"
+maxminddb = ">=2.0,<3.0"
+mmdb-writer = {git = "https://github.com/VimT/MaxMind-DB-Writer-python"}
+tqdm = ">=4.0,<5.0"
+
+parfive = "^2.0.2"
+
+Sphinx = {version = ">=5.0,<6.0"}
+tox-poetry = {version = ">=0.5,<1.0"}
+tox = {version = ">=3.0,<4.0"}
+pytest = {version = ">=7.0,<8.0"}
+pytest-cov = {version = "^4.0.0"}
+pre-commit = {version = ">=2.0,<3.0"}
+sphinx-pydantic = ">=0.1,<1.0"
+sphinx-rtd-theme = ">=1.0,<2.0"
+typer = ">=0.1.0,<1.0"
+
+[tool.poetry.extras]
+docs = ["Sphinx", "sphinx-rtd-theme", "sphinxcontrib-napoleon", "sphinx-pydantic", "sphinx-rtd-theme"]
+testing = ["pytest", "pytest-cov", "pre-commit", "tox", "tox-poetry"]
+cli = ["parfive", "typer"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.mypy]
+exclude = ["docs/*", "tests/*"]
+warn_return_any = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = "netaddr"
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "mmdb_writer"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "parfive"
+ignore_missing_imports = true
