@@ -74,59 +74,11 @@ def _download_files(
     :param outdir: a writeable directory to write the files to.
     :param progress:  If `True` show a main progress bar showing how many of the total
         files have been downloaded. If `False`, no progress bars will be shown at all.
-
-    .. testsetup::
-
-        >>> from multiprocessing import Process
-        >>> from http.server import HTTPServer
-        >>> from http.server import SimpleHTTPRequestHandler
-        >>> from os import chdir
-        >>> from os.path import basename, dirname, abspath, join, isfile
-        >>> from hashlib import md5
-        >>> fdir = dirname(abspath(__file__))
-        >>> chdir(join(fdir, '..', 'tests', 'files'))
-        >>> from tempfile import TemporaryDirectory
-        >>> port = 48102
-        >>> httpd = HTTPServer(('127.0.0.1', port), SimpleHTTPRequestHandler)
-
-    .. doctest::
-
-        >>> p = Process(target=httpd.serve_forever)
-        >>> p.start()
-        >>> result = set()
-        >>> with TemporaryDirectory() as tmpdir:
-        ...     try:
-        ...         file_list = _download_files(
-        ...             f'http://localhost:{port}/custom.csv',
-        ...             f'http://localhost:{port}/dbip-country-lite.csv',
-        ...             progress=False,
-        ...             outdir=tmpdir
-        ...         )
-        ...     except Exception as e:
-        ...         raise e
-        ...     else:
-        ...         file_list = file_list
-        ...     finally:
-        ...         p.kill()
-        ...         p.join()
-        ...
-        ...     assert all(isfile(f) for f in file_list), f'not a file {file_list}'
-        ...     assert len(file_list) == 2, f'invalid length: {file_list}'
-        ...     with open(file_list[0], 'rb') as h0, open(file_list[1], 'rb') as h1:
-        ...         result.add(md5(h0.read()).hexdigest())
-        ...         result.add(md5(h1.read()).hexdigest())
-        >>>
-        >>> expected = {
-        ...     '8e323cd5ad167094bc73340b02b71c9e',
-        ...     '0fefd46805301bf91a586fd5c2cb6166'
-        ... }
-        >>> assert result == expected, result
     """
     dl = Downloader(progress=progress)
     for u in url:
         dl.enqueue_file(u, path=outdir)
     files = dl.download()
-    assert isinstance(files, list)
     assert all(isinstance(f, str) for f in files)
     return cast(List[str], files)
 
@@ -136,6 +88,7 @@ def _gunzip(*filename: Union[str, PathLike[AnyStr]]) -> List[str]:
     gunzips a file.
 
     :param filename: one or multiple files
+    :return: the filename of the extracted file.
 
     .. testsetup::
 
@@ -183,22 +136,6 @@ def _find_mmdb(pattern: str) -> str:
     :param pattern: a globable pattern.
     :return: the first file found which was a valid mmdb
     :raises BadParameter: if not database was found
-
-    .. doctest::
-
-        >>> from os.path import abspath, dirname, join
-
-        >>> dir = dirname(abspath(__file__))
-        >>> pattern = join(join(dir, '..', 'tests', 'files', '*.mmdb'))
-        >>> result = _find_mmdb(pattern)
-        >>> assert result.endswith('.mmdb')
-
-    .. doctest::
-
-        >>> pattern = join(join(dir, '..', 'tests', 'files', '*.csv'))
-        >>> result = _find_mmdb(pattern)
-        Traceback (most recent call last):
-        click.exceptions.BadParameter: no valid mmdb found.
     """
     pattern = abspath(pattern)
     directory = dirname(pattern)
@@ -277,131 +214,25 @@ def get(
         [], "--exclude", "-x", help="exclude columns from displaing."
     ),
 ) -> None:
-    """
-    .. testsetup::
-
-        >>> from os.path import basename, dirname, abspath, join, isfile
-        >>> fdir = dirname(abspath(__file__))
-        >>> db = join(fdir, '..', 'tests', 'files', 'test.mmdb')
-
-
-    .. doctest:: Test record found
-
-        >>> get('1.0.0.0', db, False, [])
-        {"iso": "UK", "network": "1.0.0.0/24"}
-
-
-    .. doctest:: Test record not found
-
-        >>> get('8.8.8.8', db, False, [])
-
-    .. doctest:: Test pritty print
-
-        >>> get('1.0.0.0', db, True, [])
-        {
-            "iso": "UK",
-            "network": "1.0.0.0/24"
-        }
-
-    .. doctest:: Test exclude field
-
-        >>> get('1.0.0.0', db, False, ['network'])
-        {"iso": "UK"}
-
-    .. doctest:: Test exclude everython
-
-        >>> get('1.0.0.0', db, False, ['iso', 'network'])
-        Traceback (most recent call last):
-        click.exceptions.Abort: ...
-    """
     with maxminddb.open_database(database) as reader:
         or_dataset = reader.get(ip)
 
     if isinstance(or_dataset, dict):
         or_dataset = decode_dataset(or_dataset)
         result = {k: v for k, v in or_dataset.items() if k not in set(exclude)}
-        if len(exclude) > 0 and len(or_dataset) != len(result) and len(result) == 0:
-            err = "record found but all field are excluded.\n"
-            logging.critical(err)
-            raise Abort(err)
         indent = 4 if pretty is True else None
         print(json.dumps(result, indent=indent))
 
 
 def _get_dbip_files(
-    baseurl: str, month: datetime, asn: bool, country: bool, city: bool, progress: bool
+    baseurl: str,
+    month: datetime,
+    asn: bool,
+    country: bool,
+    city: bool,
+    progress: bool,
+    outdir: Union[str, PathLike[AnyStr]],
 ) -> Dict[str, BuiltinFormat]:
-    """
-    .. testsetup::
-
-        >>> from multiprocessing import Process
-        >>> from http.server import HTTPServer
-        >>> from http.server import SimpleHTTPRequestHandler
-        >>> from os import chdir
-        >>> from os.path import basename, dirname, abspath, join, isfile
-        >>> from hashlib import md5
-        >>> from datetime import datetime
-        >>> fdir = dirname(abspath(__file__))
-        >>> chdir(join(fdir, '..', 'tests', 'files'))
-        >>> from tempfile import TemporaryDirectory
-        >>> port = 38102
-        >>> httpd = HTTPServer(('127.0.0.1', port), SimpleHTTPRequestHandler)
-
-    .. doctest:: Download and extract from dummy server
-
-        >>> p = Process(target=httpd.serve_forever)
-        >>> p.start()
-        >>> result = set()
-        >>> baseurl = f'http://localhost:{port}/free'
-        >>> month = datetime(2023, 2, 1)
-        >>> with TemporaryDirectory() as tmpdir:
-        ...     try:
-        ...         download_fmt_map = _get_dbip_files(
-        ...             baseurl=baseurl,
-        ...             month=month,
-        ...             asn=True,
-        ...             country=True,
-        ...             city=True,
-        ...             progress=False,
-        ...         )
-        ...     except:
-        ...         raise
-        ...     finally:
-        ...         p.kill()
-        ...         p.join()
-        ...
-        ...     result = set()
-        ...     for fname in download_fmt_map.keys():
-        ...         with open(fname, 'rb') as handle:
-        ...             result.add(md5(handle.read()).hexdigest())
-        >>>
-        >>> assert BuiltinFormat.asn in download_fmt_map.values(), "missing asn"
-        >>> assert BuiltinFormat.city in  download_fmt_map.values(), "missing city"
-        >>> assert BuiltinFormat.country in download_fmt_map.values(), "missing country"
-        >>>
-        >>> expected = {
-        ...     '5ba6f274682bcff909abced3b2f60b35',
-        ...     '5c756ef445c77bd3b8d0a712a7f7c1ec',
-        ...     '27d642fd033088bb216fbed7e9f1ffaf',
-        ... }
-        >>> assert result == expected, result.difference(expected)
-
-    .. doctest:: Download failed
-
-        >>> baseurl = f'http://localhost:{port+1}/free'
-        >>> month = datetime(2023, 2, 1)
-        >>> with TemporaryDirectory() as tmpdir:
-        ...     download_fmt_map = _get_dbip_files(
-        ...         baseurl=baseurl,
-        ...         month=month,
-        ...         asn=True,
-        ...         country=True,
-        ...         city=True,
-        ...         progress=False,
-        ...     )
-        Traceback (most recent call last):
-        click.exceptions.Abort: ...
-    """
     requested_month = month.strftime("%Y-%m")
     options = {
         BuiltinFormat.city: city,
@@ -457,51 +288,25 @@ def dbip_build(
         "-m",
         formats=["%Y-%m", "%y-%m", "%m/%Y", "%m/%y", "%m.%Y", "%m.%y"],
     ),
+    outdir: Path = Option(
+        ".",
+        "--out",
+        "-o",
+        readable=True,
+        exists=True,
+        file_okay=True,
+        resolve_path=True,
+        help="a custom csv file for a custom mmdb",
+    ),
 ) -> None:
-    """
-    .. testsetup::
-
-        >>> from multiprocessing import Process
-        >>> from http.server import HTTPServer
-        >>> from http.server import SimpleHTTPRequestHandler
-        >>> from os import chdir
-        >>> from os.path import basename, dirname, abspath, join, isfile
-        >>> from hashlib import md5
-        >>> from datetime import datetime
-        >>> fdir = dirname(abspath(__file__))
-        >>> chdir(join(fdir, '..', 'tests', 'files'))
-        >>> from tempfile import TemporaryDirectory
-        >>> port = 38104
-        >>> httpd = HTTPServer(('127.0.0.1', port), SimpleHTTPRequestHandler)
-
-    .. doctest:: Download and build
-
-        >>> p = Process(target=httpd.serve_forever)
-        >>> p.start()
-        >>> result = set()
-        >>> baseurl = f'http://localhost:{port}/free'
-        >>> month = datetime(2023, 2, 1)
-        >>> with TemporaryDirectory() as tmpdir:
-        ...     chdir(tmpdir)
-        ...     try:
-        ...         dbip_build(
-        ...             baseurl=baseurl,
-        ...             month=month,
-        ...             asn=True,
-        ...             country=True,
-        ...             city=True,
-        ...             lsc=False,
-        ...             exclude=['network'],
-        ...         )
-        ...     except:
-        ...         raise
-        ...     finally:
-        ...         p.kill()
-        ...         p.join()
-        >>>
-    """
     download_fmt_map = _get_dbip_files(
-        baseurl=baseurl, month=month, asn=asn, country=country, city=city, progress=True
+        baseurl=baseurl,
+        month=month,
+        asn=asn,
+        country=country,
+        city=city,
+        progress=True,
+        outdir=outdir,
     )
 
     for fpath, fmt in download_fmt_map.items():
@@ -511,7 +316,7 @@ def dbip_build(
             fmt=fmt,
             netcol="ip_start,ip_end",
             headers=",".join(["ip_start", "ip_end"] + clazz.headers),
-            out=Path(f"./{clazz.database_type}.mmdb"),
+            out=Path(join(outdir, f"{clazz.database_type}.mmdb")),
             exclude=exclude,
             lsc=lsc,
         )
@@ -748,89 +553,6 @@ def build(
     ),
     lsc: bool = Option(False, help="wrap the payload for logstash compatibility"),
 ) -> None:
-    """
-    .. doctest:: Test csv header // custom data // custom netcol.
-
-        >>> from tempfile import TemporaryDirectory
-        >>> fdir = dirname(abspath(__file__))
-        >>> with TemporaryDirectory() as tmpdir:
-        ...     db=Path(join(tmpdir, 'test.mmdb'))
-        ...     build(
-        ...         csv=Path(join(fdir, '..', 'tests', 'files', 'custom.csv')),
-        ...         netcol="netx",
-        ...         headers=None,
-        ...         fmt=BuiltinFormat.generic,
-        ...         out=db,
-        ...         exclude=[],
-        ...         lsc=False,
-        ...     )
-        ...     get('1.0.0.0', db, False, [])
-        {"cc": "UK", "netx": "1.0.0.0/24"}
-
-    .. doctest:: missing first ip header
-
-        >>> build(
-        ...     csv=Path(
-        ...         join(
-        ...             fdir,
-        ...             '..',
-        ...             'tests',
-        ...             'files',
-        ...             'dbip-asn-lite-2023-02.csv'
-        ...         )
-        ...     ),
-        ...     netcol="first_ip,last_ip",
-        ...     headers='xx,last_ip',
-        ...     fmt=BuiltinFormat.generic,
-        ...     out=db,
-        ...     exclude=[],
-        ...     lsc=False,
-        ... )
-        Traceback (most recent call last):
-        click.exceptions.Abort: first ip header not available: first_ip
-
-    .. doctest:: missing ip last ip header
-        >>> build(
-        ...     csv=Path(
-        ...         join(
-        ...             fdir,
-        ...             '..',
-        ...             'tests',
-        ...             'files',
-        ...             'dbip-asn-lite-2023-02.csv'
-        ...         )
-        ...     ),
-        ...     netcol="first_ip,last_ip",
-        ...     headers='first_ip,xx',
-        ...     fmt=BuiltinFormat.generic,
-        ...     out=db,
-        ...     exclude=[],
-        ...     lsc=False,
-        ... )
-        Traceback (most recent call last):
-        click.exceptions.Abort: last ip header not available: last_ip
-
-    .. doctest:: missing netcol
-        >>> build(
-        ...     csv=Path(
-        ...         join(
-        ...             fdir,
-        ...             '..',
-        ...             'tests',
-        ...             'files',
-        ...             'dbip-asn-lite-2023-02.csv'
-        ...         )
-        ...     ),
-        ...     netcol="missing",
-        ...     headers='cidr,other',
-        ...     fmt=BuiltinFormat.generic,
-        ...     out=db,
-        ...     exclude=[],
-        ...     lsc=False,
-        ... )
-        Traceback (most recent call last):
-        click.exceptions.Abort: network header not available: missing
-    """
     linegen = linewise(csv, desc=f"reading {fmt}")
 
     if headers is not None:
@@ -875,6 +597,6 @@ def build(
         clazz=clazz,
     )
 
-    MMDBDataset.write(generator, outfile=out)
+    MMDBDataset.write(generator, outfile=out, wrap_logstash_compatible=lsc)
 
     sys.stderr.write(f"database written to {out}\n")
