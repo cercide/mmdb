@@ -271,7 +271,7 @@ def _get_dbip_files(
     return download_fmt_map
 
 
-@app.command()
+@app.command(help="Downloads and build from the dbip (free) repository")
 def dbip_build(
     city: bool = Option(True, help="build dbip city mmdb"),
     asn: bool = Option(True, help="build dbip asn mmdb"),
@@ -510,7 +510,7 @@ def _record_generator(
             yield record
 
 
-@app.command()
+@app.command(help="builds an mmdb file from a csv source")
 def build(
     csv: Path = Argument(
         ...,

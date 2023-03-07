@@ -2,19 +2,18 @@
     <h1 align="center">MMDB</h1>
 </p>
 <p align="center">
-    <code>pip install mmdb[cli]</code>
-</p>
-<p align="center">
     <em>Create a MaxMind Databases for your own needs.</em>
 </p>
 <p align="center">
-    <img src="https://img.shields.io/github/license/cercide/mmdb">
+    <img src="https://img.shieldsg.io/github/license/cercide/mmdb">
     <img src="https://github.com/cercide/mmdb/actions/workflows/tests.yml/badge.svg">
     <a href="https://app.codecov.io/gh/cercide/mmdb"><img src="https://codecov.io/gh/cercide/mmdb/branch/master/graph/badge.svg"></a>
     <a href="https://www.codefactor.io/repository/github/cercide/mmdb"><img src="https://www.codefactor.io/repository/github/cercide/mmdb/badge"></a>
     <img src="https://img.shields.io/pypi/pyversions/mmdb.svg">
 </p>
-
+<p align="center">
+    <code>pip install mmdb[cli]</code>
+</p>
 
 ## Features
 
@@ -22,7 +21,7 @@
   + Download and build [DBIP](https://db-ip.com/db/lite.php) database [ASN Lite](https://db-ip.com/db/download/ip-to-asn-lite), [Country Lite](https://db-ip.com/db/download/ip-to-country-lite), and [City Lite](https://db-ip.com/db/download/ip-to-city-lite): `mmdb dbip-build`
   + Create an IP database from a CSV file: `mmdb build <CSV>`
   + Logstash [GeoIP Filter Plugin](https://www.elastic.co/guide/en/logstash/current/plugins-filters-geoip.html) compatibility: `mmdb build <CSV> --lsc`
-  + Additional country data such as `is_eu`, `is_nato`, or `is_g7`: `mmdb build <CSV> -f country`
+  + Additional country data such as **is_eu**, **is_nato**, or **is_g7**: `mmdb build <CSV> -f country`
 
 ## Examples
 

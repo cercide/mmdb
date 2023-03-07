@@ -7,6 +7,9 @@ license = "MIT"
 readme = "README.md"
 packages = [{include = "mmdb"}]
 
+[tool.poetry.scripts]
+mmdb = "mmdb.cli:app"
+
 [tool.poetry.dependencies]
 python = ">=3.7,<4.0.0"
 pydantic = ">=1.10.0,<2.0"
