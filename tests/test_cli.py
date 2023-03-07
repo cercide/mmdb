@@ -9,7 +9,7 @@ from requests.exceptions import ConnectionError
 from click.exceptions import BadParameter, Abort
 from http.server import HTTPServer
 from os.path import join, isfile
-from hashlib import md5
+from hashlib import sha1
 from mmdb import cli
 from io import StringIO
 from pathlib import Path
@@ -112,7 +112,7 @@ class MMDBTests(TestCase):
                     progress=False,
                     outdir=tmpdir
                 )
-            except: #pragma: no cover
+            except Exception: #pragma: no cover
                 raise
             finally:
                 p.kill()
@@ -121,13 +121,14 @@ class MMDBTests(TestCase):
             self.assertTrue(all(isfile(f) for f in file_list), f'not a file {file_list}')
             self.assertTrue(len(file_list) == 2, f'invalid length: {file_list})')
             with open(file_list[0], 'rb') as h0, open(file_list[1], 'rb') as h1:
-                result.add(md5(h0.read()).hexdigest())
-                result.add(md5(h1.read()).hexdigest())
+                result.add(sha1(h0.read()).hexdigest())
+                result.add(sha1(h1.read()).hexdigest())
         expected = {
-            '8e323cd5ad167094bc73340b02b71c9e',
-            '22498c6d44fdc6fbf258da8fb9c1e073'
+            'a135d2a1e9203c9f1de5a01c2b92febbc2c5e06c',
+            'bd0e362414e8fe044f8781866bda654a877fcd45'
         }
         self.assertEqual(result, expected)
+
 
     def test_find_mmdb(self):
         pattern = join(self.tmp, '*.mmdb')
@@ -196,7 +197,7 @@ class MMDBTests(TestCase):
                     progress=False,
                     outdir=tmpdir,
                 )
-            except: #pragma: no cover
+            except Exception: #pragma: no cover
                 raise
             finally:
                 p.kill()
@@ -206,16 +207,16 @@ class MMDBTests(TestCase):
             result = set()
             for fname in download_fmt_map.keys():
                 with open(fname, 'rb') as handle:
-                    result.add(md5(handle.read()).hexdigest())
+                    result.add(sha1(handle.read()).hexdigest())
 
         assert cli.BuiltinFormat.asn in download_fmt_map.values(), "missing asn"
         assert cli.BuiltinFormat.city in download_fmt_map.values(), "missing city"
         assert cli.BuiltinFormat.country in download_fmt_map.values(), "missing country"
 
         expected = {
-            '5ba6f274682bcff909abced3b2f60b35',
-            '5c756ef445c77bd3b8d0a712a7f7c1ec',
-            '27d642fd033088bb216fbed7e9f1ffaf',
+            '4954ee0a7544a2a004705194e4a473414c5130c4',
+            '4abefbd30baed51764d8b44a117a6b2e4e5b86f1',
+            '668f50dcc0d9353f80a80add621a9348810ac800'
         }
         assert result == expected, result.difference(expected)
 
@@ -255,7 +256,7 @@ class MMDBTests(TestCase):
                 exclude=['network'],
                 outdir=self.tmp,
             )
-        except Exception as e: #pragma: no cover
+        except Exception: #pragma: no cover
             raise
         finally:
             p.kill()

@@ -12,8 +12,6 @@ import maxminddb
 from tempfile import TemporaryDirectory
 from mmdb.models import IpToCountryLite
 
-DIR = dirname(abspath(__file__))
-MMDB = "/tmp/test.mmdb"
 country_info = dict(
     iso_a2='US',
     iso_a3='USA',

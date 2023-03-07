@@ -747,7 +747,7 @@ testing = ["pytest", "pytest-cov", "pre-commit", "tox", "tox-poetry"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<4.0.0"
-content-hash = "eb08b6917ae2da2279549922121934fe44f12b67391b45f7236ed87ba173f478"
+content-hash = "f48bcd6686b7bd5116d8c5995a15e6ca8ddda03dee5d61d28278af16c5574206"
 
 [metadata.files]
 alabaster = [

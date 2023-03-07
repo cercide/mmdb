@@ -146,9 +146,11 @@ def _find_mmdb(pattern: str) -> str:
     for candidate in candidates:
         try:
             maxminddb.open_database(candidate)
-            return abspath(candidate)
+            found = True
         except Exception:
-            pass
+            found = False
+        if found is True:
+            return abspath(candidate)
 
     raise BadParameter("no valid mmdb found.")
 
