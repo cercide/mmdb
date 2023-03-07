@@ -34,6 +34,7 @@ repos:
           - tqdm
           - netaddr
           - tqdm-stubs
+          - types-requests
           - parfive
           - typer
           - git+https://github.com/VimT/MaxMind-DB-Writer-python

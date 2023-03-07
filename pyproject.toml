@@ -15,7 +15,6 @@ maxminddb = ">=2.0,<3.0"
 mmdb-writer = {git = "https://github.com/VimT/MaxMind-DB-Writer-python"}
 tqdm = ">=4.0,<5.0"
 
-parfive = "^2.0.2"
 
 Sphinx = {version = ">=5.0,<6.0"}
 tox-poetry = {version = ">=0.5,<1.0"}

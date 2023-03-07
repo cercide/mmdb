@@ -4,7 +4,6 @@ import logging
 import os
 import shutil
 import sys
-import requests
 from datetime import datetime
 from enum import Enum
 from ipaddress import ip_address
@@ -16,7 +15,6 @@ from os.path import dirname
 from os.path import join
 from pathlib import Path
 from typing import AnyStr
-from typing import cast
 from typing import Collection
 from typing import Dict
 from typing import Iterator
@@ -27,8 +25,8 @@ from typing import Type
 from typing import Union
 
 import maxminddb
+import requests
 from netaddr import iprange_to_cidrs
-from parfive import Downloader
 from typer import Abort
 from typer import Argument
 from typer import BadParameter
@@ -78,9 +76,9 @@ def _download_files(
     """
     result = []
     for u in url:
-        fname = join(outdir, basename(u))
+        fname = join(str(outdir), basename(u))
         r = requests.get(u, allow_redirects=True)
-        with open(fname, 'wb') as handle:
+        with open(fname, "wb") as handle:
             handle.write(r.content)
         result.append(fname)
     return result
@@ -260,7 +258,7 @@ def _get_dbip_files(
         db_type for db_type, dl_requested in options.items() if dl_requested is True
     }
     received_db_types = set(download_fmt_map.values())
-    if received_db_types != requested_db_types: #pragma: no cover
+    if received_db_types != requested_db_types:  # pragma: no cover
         # this should not happen since there should be some  exceptions beforehand
         err = (
             "did not receive the following files: "

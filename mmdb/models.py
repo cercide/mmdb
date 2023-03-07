@@ -124,7 +124,7 @@ class InstanceReader(Reader):
     def __init__(
         self,
         model: Type["MMDBDataset"],
-        database: Union[AnyStr, int, PathLike[Any], IO[Any]],
+        database: Union[AnyStr, int, "PathLike[Any]", IO[Any]],
         mode: int = MODE_AUTO,
     ) -> None:
         super().__init__(database, mode)
