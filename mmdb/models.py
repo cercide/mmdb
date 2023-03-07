@@ -37,7 +37,7 @@ from mmdb.rsc import CountrySummary
 
 
 def linewise(
-    filename: Union[str, PathLike[AnyStr]],
+    filename: Union[str, "PathLike[AnyStr]"],
     *,
     show_status: bool = True,
     desc: str = "reading",
@@ -424,7 +424,7 @@ class MMDBDataset(BaseModel):
     def write(
         cls,
         source: Union[str, Iterator["MMDBDataset"], Iterator[GenericDataset]],
-        outfile: Union[str, PathLike[AnyStr]],
+        outfile: Union[str, "PathLike[AnyStr]"],
         *,
         wrap_logstash_compatible: bool = False,
     ) -> None:

@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 import sys
+import requests
 from datetime import datetime
 from enum import Enum
 from ipaddress import ip_address
@@ -64,7 +65,7 @@ FORMAT_CLAZZ_MAP: Dict[
 
 
 def _download_files(
-    *url: str, outdir: Union[str, PathLike[AnyStr]], progress: bool = True
+    *url: str, outdir: Union[str, "PathLike[AnyStr]"], progress: bool = True
 ) -> Collection[str]:
     """
     Downloads any file from the fiven url. This method does not throw any
@@ -75,15 +76,17 @@ def _download_files(
     :param progress:  If `True` show a main progress bar showing how many of the total
         files have been downloaded. If `False`, no progress bars will be shown at all.
     """
-    dl = Downloader(progress=progress)
+    result = []
     for u in url:
-        dl.enqueue_file(u, path=outdir)
-    files = dl.download()
-    assert all(isinstance(f, str) for f in files)
-    return cast(List[str], files)
+        fname = join(outdir, basename(u))
+        r = requests.get(u, allow_redirects=True)
+        with open(fname, 'wb') as handle:
+            handle.write(r.content)
+        result.append(fname)
+    return result
 
 
-def _gunzip(*filename: Union[str, PathLike[AnyStr]]) -> List[str]:
+def _gunzip(*filename: Union[str, "PathLike[AnyStr]"]) -> List[str]:
     """
     gunzips a file.
 
@@ -231,7 +234,7 @@ def _get_dbip_files(
     country: bool,
     city: bool,
     progress: bool,
-    outdir: Union[str, PathLike[AnyStr]],
+    outdir: Union[str, "PathLike[AnyStr]"],
 ) -> Dict[str, BuiltinFormat]:
     requested_month = month.strftime("%Y-%m")
     options = {
@@ -245,11 +248,11 @@ def _get_dbip_files(
         f"dbip-city-lite-{requested_month}.csv": BuiltinFormat.city,
     }
     urls = [
-        f"{baseurl}/dbip-{db_type}-lite-{requested_month}.csv.gz"
+        f"{baseurl}/dbip-{db_type.value}-lite-{requested_month}.csv.gz"
         for db_type, dl_requested in options.items()
         if dl_requested is True
     ]
-    files = _download_files(*urls, outdir=".", progress=progress)
+    files = _download_files(*urls, outdir=outdir, progress=progress)
     files = _gunzip(*files)
     download_fmt_map = {f: file_format_map[basename(f)] for f in files}
 
@@ -257,7 +260,8 @@ def _get_dbip_files(
         db_type for db_type, dl_requested in options.items() if dl_requested is True
     }
     received_db_types = set(download_fmt_map.values())
-    if received_db_types != requested_db_types:
+    if received_db_types != requested_db_types: #pragma: no cover
+        # this should not happen since there should be some  exceptions beforehand
         err = (
             "did not receive the following files: "
             f"{[s.value for s in requested_db_types.difference(received_db_types)]}"

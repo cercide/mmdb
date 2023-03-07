@@ -3,6 +3,8 @@ import sys
 from unittest import TestCase
 from tempfile import TemporaryDirectory
 from base64 import b64decode
+from requests.exceptions import ConnectionError
+
 
 from click.exceptions import BadParameter, Abort
 from http.server import HTTPServer
@@ -17,20 +19,18 @@ from http.server import SimpleHTTPRequestHandler
 from datetime import datetime
 
 
-class HTTPHandler(SimpleHTTPRequestHandler):
-    """This handler uses server.base_path instead of always using os.getcwd()"""
-    def translate_path(self, path): #pragma: no cover
-        path = SimpleHTTPRequestHandler.translate_path(self, path)
-        relpath = os.path.relpath(path, os.getcwd())
-        fullpath = os.path.join(self.server.base_path, relpath)
-        return fullpath
-
-
 class HTTPServer(BaseHTTPServer):
     """The main server, you pass in base_path which is the path you want to serve requests from"""
-    def __init__(self, base_path, server_address, RequestHandlerClass=HTTPHandler):
+    def __init__(self, base_path, server_address, RequestHandlerClass=SimpleHTTPRequestHandler):
         self.base_path = base_path
-        BaseHTTPServer.__init__(self, server_address, RequestHandlerClass)
+        super().__init__(server_address, RequestHandlerClass)
+
+    def serve_forever(self, *args, **kwargs): #pragma: no cover
+        # runs in subprocess --> not affected by coverage
+        os.chdir(self.base_path)
+        print(self.base_path)
+        print(list(Path(self.base_path).rglob('*')))
+        super().serve_forever(*args, **kwargs)
 
 
 class MMDBTests(TestCase):
@@ -105,14 +105,19 @@ class MMDBTests(TestCase):
 
         result = set()
         with TemporaryDirectory() as tmpdir:
-            file_list = cli._download_files(
-                f'http://localhost:{port}/custom.csv',
-                f'http://localhost:{port}/dbip-country-lite.csv',
-                progress=False,
-                outdir=tmpdir
-            )
-            p.kill()
-            p.join()
+            try:
+                file_list = cli._download_files(
+                    f'http://localhost:{port}/custom.csv',
+                    f'http://localhost:{port}/dbip-country-lite.csv',
+                    progress=False,
+                    outdir=tmpdir
+                )
+            except: #pragma: no cover
+                raise
+            finally:
+                p.kill()
+                p.terminate()
+                p.join()
             self.assertTrue(all(isfile(f) for f in file_list), f'not a file {file_list}')
             self.assertTrue(len(file_list) == 2, f'invalid length: {file_list})')
             with open(file_list[0], 'rb') as h0, open(file_list[1], 'rb') as h1:
@@ -195,6 +200,7 @@ class MMDBTests(TestCase):
                 raise
             finally:
                 p.kill()
+                p.terminate()
                 p.join()
 
             result = set()
@@ -217,7 +223,7 @@ class MMDBTests(TestCase):
         # no server required
         baseurl = f'http://localhost:{port + 1}/free'
         month = datetime(2023, 2, 1)
-        with self.assertRaises(Abort):
+        with self.assertRaises(ConnectionError):
             with TemporaryDirectory() as tmpdir:
                 download_fmt_map = cli._get_dbip_files(
                     baseurl=baseurl,
@@ -249,10 +255,11 @@ class MMDBTests(TestCase):
                 exclude=['network'],
                 outdir=self.tmp,
             )
-        except: #pragma: no cover
+        except Exception as e: #pragma: no cover
             raise
         finally:
             p.kill()
+            p.terminate()
             p.join()
 
     def test_build(self):
