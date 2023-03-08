@@ -5,7 +5,7 @@
     <em>Create a MaxMind Databases for your own needs.</em>
 </p>
 <p align="center">
-    <img src="https://img.shieldsg.io/github/license/cercide/mmdb">
+    <img src="https://img.shields.io/github/license/cercide/mmdb">
     <img src="https://github.com/cercide/mmdb/actions/workflows/tests.yml/badge.svg">
     <a href="https://app.codecov.io/gh/cercide/mmdb"><img src="https://codecov.io/gh/cercide/mmdb/branch/master/graph/badge.svg"></a>
     <a href="https://www.codefactor.io/repository/github/cercide/mmdb"><img src="https://www.codefactor.io/repository/github/cercide/mmdb/badge"></a>
