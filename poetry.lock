@@ -222,20 +222,14 @@ python-versions = ">=3.6"
 [[package]]
 name = "mmdb-writer"
 version = "0.1.1"
-description = "Make `mmdb` format ip library file which can be read by maxmind official language reader"
+description = "Make mmdb format ip library file which can be read by maxmind official language reader"
 category = "main"
 optional = false
-python-versions = ">=3.6"
-develop = false
+python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-netaddr = ">=0.7"
-
-[package.source]
-type = "git"
-url = "https://github.com/VimT/MaxMind-DB-Writer-python"
-reference = "HEAD"
-resolved_reference = "82fabc6c1fd882d3e4afb12d2a46d53fda58a51a"
+maxminddb = ">=2.0,<3.0"
+netaddr = ">=0.7.0,<1.0"
 
 [[package]]
 name = "netaddr"
@@ -747,7 +741,7 @@ testing = ["pytest", "pytest-cov", "pre-commit", "tox", "tox-poetry"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<4.0.0"
-content-hash = "f48bcd6686b7bd5116d8c5995a15e6ca8ddda03dee5d61d28278af16c5574206"
+content-hash = "2badebf30f6936a4d982cb9299134480441a97b2e57d8c7032e311611ac3fbb9"
 
 [metadata.files]
 alabaster = [
@@ -1007,7 +1001,10 @@ markupsafe = [
 maxminddb = [
     {file = "maxminddb-2.2.0.tar.gz", hash = "sha256:e37707ec4fab115804670e0fb7aedb4b57075a8b6f80052bdc648d3c005184e5"},
 ]
-mmdb-writer = []
+mmdb-writer = [
+    {file = "mmdb_writer-0.1.1-py3-none-any.whl", hash = "sha256:17a6aa9a9107bdaabf28c9b60c843703c34c5167193330f577c3ea6c31021426"},
+    {file = "mmdb_writer-0.1.1.tar.gz", hash = "sha256:e5755e6d26bd6db8e4f9018df7c129db4dbca441e768fa1e08fb2abd0ae3390e"},
+]
 netaddr = [
     {file = "netaddr-0.8.0-py2.py3-none-any.whl", hash = "sha256:9666d0232c32d2656e5e5f8d735f58fd6c7457ce52fc21c98d45f2af78f990ac"},
     {file = "netaddr-0.8.0.tar.gz", hash = "sha256:d6cc57c7a07b1d9d2e917aa8b36ae8ce61c35ba3fcd1b83ca31c5a0ee2b5a243"},
